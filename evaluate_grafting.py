@@ -16,17 +16,40 @@ init()
 	  CA   C   N
 	 /  \ ? \ /
 	C    N   CA
+
+_grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34}, 
+		   'L2' : {'ch_id':'L', 'nter': 50, 'cter': 56}, 
+		   'L3' : {'ch_id':'L', 'nter': 89, 'cter': 97}, 
+		   'H1' : {'ch_id':'H', 'nter': 26, 'cter': 35}, 
+		   'H2' : {'ch_id':'H', 'nter': 50, 'cter': 65} 
+		   } # H3 is not on the list
 '''
 
 
 
 
-_grafting_list_ = {'L1' : [] , 
-		   'L2' : , 
-		   'L3' : , 
-		   'H1' : , 
-		   'H2' 
+_grafting_stems_ = {'L1_stem' : {'ch_id':'L', 
+                                 'nter' : {'start':20, 'end':23}, 
+                                 'cter' : {'start':35, 'end':38}
+			        }, 
+		    'L2_stem' : {'ch_id':'L', 
+			         'nter' : {'start':46, 'end':49}, 
+			         'cter' : {'start':57, 'end':60} 
+			        }, 
+		    'L3_stem' : {'ch_id':'L', 
+				 'nter' : {'start':85, 'end':88}, 
+				 'cter':  {'start':98, 'end':101}
+				}, 
+		    'H1_stem' : {'ch_id':'H', 
+				 'nter' : {'start':22, 'end':25}, 
+				 'cter' : {'start':36, 'end':39}
+				}, 
+		    'H2_stem' : {'ch_id':'H', 
+				  'nter': {'start':46, 'end':49}, 
+				  'cter': {'start':66, 'end':69} 
+				} 
 		   } # H3 is not on the list
+_stem_size_ = 4
 
 _script_path_ = os.path.dirname( os.path.realpath(__file__) )
 
@@ -38,20 +61,18 @@ _models_to_check_ = {'Grafted'  : "/output/details/1.pdb",
 		     'Crystal': ".renum.best_packed.pdb"
 		    }
 
-pose = Pose()
 
 
 
-
-def check_N_C_bond():
+#def check_N_C_bond():
 #def check_CA_N_C():
 #def check_N_C_CA():
 #def check_d_rmsd():
 #def check_d_score():
 
 
-def check_things(pose):
-	check_N_C(pose)
+#def check_things(pose):
+	#check_N_C(pose)
 	#check_CA_N_C()
 	#check_N_C_CA()
 	#check_d_rmsd()
@@ -77,6 +98,8 @@ def main(args):
     global Options; Options = options
 
 
+    pose = Pose()
+
     print "Targets List: "+Options.benchmark_pdb_list
     targets_list_file = open( Options.benchmark_pdb_list, 'r' )
 
@@ -97,9 +120,14 @@ def main(args):
 	    pose.clear(); pose_from_pdb(pose, file_name)
 
 	    # loop over L1, L2, L3, H1, H2
-	    for graft in _grafting_list_:
-		N_C_bond = 
-		check_things(pose)
+	    for graft in _grafting_stems_:
+		print _grafting_stems_[graft]['nter']
+
+		ch_id   = _grafting_stems_[graft]['ch_id']
+		for _grafting_stems_[graft]['nter']['start']
+
+		pose_num = pose.pdb_info().pdb2pose(
+		#check_things(pose)
 	
 		#output_results()
 
