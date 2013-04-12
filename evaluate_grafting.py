@@ -69,7 +69,18 @@ _models_to_check_ = {'Grafted'  : "/output/details/1.pdb",
 #def check_d_score():
 
 
-#def check_things(pose):
+def check_things(pose):
+    # loop over L1, L2, L3, H1, H2
+    # Four Stem Residues A-B-C-D
+    for stems in _grafting_stems_:
+	print _grafting_stems_[stems]['nter']
+
+	ch_id    = _grafting_stems_[stems]['ch_id']
+
+	B_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][1])
+	C_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][2])
+
+
 	#check_C_N_bond(pose)
 	#check_CA_C_N()
 	#check_C_N_CA()
@@ -117,18 +128,10 @@ def main(args):
 	    print "          " + file_name
 	    pose.clear(); pose_from_pdb(pose, file_name)
 
-	    # loop over L1, L2, L3, H1, H2
-	    # Four Stem Residues A-B-C-D
-	    for stems in _grafting_stems_:
-		print _grafting_stems_[stems]['nter']
 
-		ch_id    = _grafting_stems_[stems]['ch_id']
-
-		B_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][1])
-		C_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][2])
-		#check_things(pose)
+	    check_things(pose)
 	
-		#output_results()
+	    #output_results()
 
 
 if __name__ == "__main__": 
