@@ -13,9 +13,9 @@ init()
 
 
 '''
-	  CA   C   N
-	 /  \ ? \ /
-	C    N   CA
+     N    C    CA  
+      \  /  ? /  \ 
+       CA    N    C
 
 _grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34}, 
 		   'L2' : {'ch_id':'L', 'nter': 50, 'cter': 56}, 
@@ -29,27 +29,26 @@ _grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34},
 
 
 _grafting_stems_ = {'L1_stem' : {'ch_id':'L', 
-                                 'nter' : {'start':20, 'end':23}, 
-                                 'cter' : {'start':35, 'end':38}
+                                 'nter' : [20, 21, 22, 23], 
+                                 'cter' : [35, 36, 37, 38]
 			        }, 
 		    'L2_stem' : {'ch_id':'L', 
-			         'nter' : {'start':46, 'end':49}, 
-			         'cter' : {'start':57, 'end':60} 
+			         'nter' : [46, 47, 48, 49], 
+			         'cter' : [57, 58, 59, 60] 
 			        }, 
 		    'L3_stem' : {'ch_id':'L', 
-				 'nter' : {'start':85, 'end':88}, 
-				 'cter':  {'start':98, 'end':101}
+				 'nter' : [85, 86, 87, 88], 
+				 'cter':  [98, 99, 100, 101]
 				}, 
 		    'H1_stem' : {'ch_id':'H', 
-				 'nter' : {'start':22, 'end':25}, 
-				 'cter' : {'start':36, 'end':39}
+				 'nter' : [22, 23, 24, 25], 
+				 'cter' : [36, 37, 38, 39]
 				}, 
 		    'H2_stem' : {'ch_id':'H', 
-				  'nter': {'start':46, 'end':49}, 
-				  'cter': {'start':66, 'end':69} 
+				  'nter': [46, 47, 48, 49], 
+				  'cter': [66, 67, 68, 69] 
 				} 
 		   } # H3 is not on the list
-_stem_size_ = 4
 
 _script_path_ = os.path.dirname( os.path.realpath(__file__) )
 
@@ -63,18 +62,17 @@ _models_to_check_ = {'Grafted'  : "/output/details/1.pdb",
 
 
 
-
-#def check_N_C_bond():
-#def check_CA_N_C():
-#def check_N_C_CA():
+#def check_C_N_bond():
+#def check_CA_C_N_angle():
+#def check_C_N_CA_angle():
 #def check_d_rmsd():
 #def check_d_score():
 
 
 #def check_things(pose):
-	#check_N_C(pose)
-	#check_CA_N_C()
-	#check_N_C_CA()
+	#check_C_N_bond(pose)
+	#check_CA_C_N()
+	#check_C_N_CA()
 	#check_d_rmsd()
 	#check_d_score()
 
@@ -120,13 +118,14 @@ def main(args):
 	    pose.clear(); pose_from_pdb(pose, file_name)
 
 	    # loop over L1, L2, L3, H1, H2
-	    for graft in _grafting_stems_:
-		print _grafting_stems_[graft]['nter']
+	    # Four Stem Residues A-B-C-D
+	    for stems in _grafting_stems_:
+		print _grafting_stems_[stems]['nter']
 
-		ch_id   = _grafting_stems_[graft]['ch_id']
-		for _grafting_stems_[graft]['nter']['start']
+		ch_id    = _grafting_stems_[stems]['ch_id']
 
-		pose_num = pose.pdb_info().pdb2pose(
+		B_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][1])
+		C_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems]['nter'][2])
 		#check_things(pose)
 	
 		#output_results()
