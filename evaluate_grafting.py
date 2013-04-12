@@ -8,15 +8,20 @@
 
 import optparse
 import os, sys
+import json
 
 from rosetta import *
 init()
 
 
 '''
-     N    C    CA  
-      \  /  ? /  \ 
-       CA    N    C
+     A-B-|-C-D  4 residues for a certain stem 
+
+     B and C connecting in the following way
+
+     ....N    C    CA  
+          \  /  ? /  \ 
+           CA    N    C....
 
 _grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34}, 
 		   'L2' : {'ch_id':'L', 'nter': 50, 'cter': 56}, 
@@ -28,28 +33,90 @@ _grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34},
 
 
 
-
-_grafting_stems_ = {'L1_stem' : {'ch_id':'L', 
-                                 'nter' : [20, 21, 22, 23], 
-                                 'cter' : [35, 36, 37, 38]
+_grafting_stems_ = {"L1_stem" : {"ch_id":"L", 
+				 "nter" : { "pdb_nums" : [20, 21, 22, 23], 
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					  },
+				 "cter" : { "pdb_num" : [35, 36, 37, 38],
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					  }
 			        }, 
-		    'L2_stem' : {'ch_id':'L', 
-			         'nter' : [46, 47, 48, 49], 
-			         'cter' : [57, 58, 59, 60] 
+		    "L2_stem" : {"ch_id":"L", 
+				 "nter" : { "pdb_nums" : [46, 47, 48, 49], 
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    },
+				 "cter" : { "pdb_nums" : [57, 58, 59, 60],
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					  }
 			        }, 
-		    'L3_stem' : {'ch_id':'L', 
-				 'nter' : [85, 86, 87, 88], 
-				 'cter':  [98, 99, 100, 101]
+		    "L3_stem" : {"ch_id":"L", 
+				 "nter" : { "pdb_nums" : [85, 86, 87, 88], 
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    },
+				 "cter":  { "pdb_nums" : [98, 99, 100, 101],
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    }
 				}, 
-		    'H1_stem' : {'ch_id':'H', 
-				 'nter' : [22, 23, 24, 25], 
-				 'cter' : [36, 37, 38, 39]
+		    "H1_stem" : {"ch_id":"H", 
+				 "nter" : { "pdb_nums" : [22, 23, 24, 25], 
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    },
+				 "cter" : { "pdb_nums" : [36, 37, 38, 39],
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    }
 				}, 
-		    'H2_stem' : {'ch_id':'H', 
-				  'nter': [46, 47, 48, 49], 
-				  'cter': [66, 67, 68, 69] 
+		    "H2_stem" : {"ch_id":"H", 
+				  "nter": { "pdb_nums" : [46, 47, 48, 49], 
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    },
+				  "cter": { "pdb_nums" :  [66, 67, 68, 69],
+				            "C_N_bond" : 0,
+					    "CA_C_N_angle" : 0,
+					    "C_N_CA_angle" : 0,
+					    "d_rmsd" : 0,
+					    "d_score" :0
+					    }
 				} 
 		   } # H3 is not on the list
+
+
+
 
 _script_path_ = os.path.dirname( os.path.realpath(__file__) )
 
