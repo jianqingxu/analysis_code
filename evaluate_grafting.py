@@ -4,6 +4,7 @@
 ## @brief  analysis to evalute the antibody CDR grafting results
 ## @author Jianqing Xu
 ## @date   Last Modified: Apr.11th, 2013 by JQX
+#
 
 import optparse
 import os, sys
@@ -28,7 +29,8 @@ _grafting_CDRs_ = {'L1' : {'ch_id':'L', 'nter': 24, 'cter': 34},
 
 
 
-_grafting_stems_ = {'L1_stem' : {'ch_id':'L', 
+_grafting_stems_ = {
+		    'L1_stem' : {'ch_id':'L', 
                                  'nter' : {'start':20, 'end':23}, 
                                  'cter' : {'start':35, 'end':38}
 			        }, 
