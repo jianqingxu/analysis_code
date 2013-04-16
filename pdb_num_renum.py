@@ -7,7 +7,7 @@
 ## @date   Last Modified: Apr.16th, 2013 by JQX
 #
 
-
+import sys
 from rosetta import *
 init()
 
@@ -15,26 +15,15 @@ init()
 
 _script_path_ = os.path.dirname( os.path.realpath(__file__) )
 
-_models_to_check_ = {'Grafted'  : "/output/details/1.pdb", 
-		     'Grafted_Min' : "/output/details/2.pdb",
-		     'Grafted_Min_Opt' : "/output/details/3.pdb",
-		     'Grafted_Min_Opt_Min': "/output/details/4.pdb",
-		     'Grafted_Min_Opt_Min_Relaxed': "/output/grafted.relaxed.pdb",
-		    }
+
 
 def get_uniq_chain_ids(pose):
+    chains=[]
+    for i in range(1, pose.total_residue()+1):
+	chains.append( pose.pdb_info().chain(i) )
 
-    uniq_chain_ids=[ pose.pdb_info().chain(1) ] # the 1st residue chain ID
-
-    for i in range(2, pose.total_residue()+1):  # loop the rest residue's chain ID
-	count = 0
-	for ch_id in uniq_chain_ids:
-	    if pose.pdb_info().chain(i) == uniq_chain_ids[ch_id]:
-		count+=1;
-	if count ==0:
-	    uniq_chain_ids.append( pose.pdb_info().chain(i) )
-
-    return uniq_chain_ids
+    from collections import OrderedDict
+    return OrderedDict.fromkeys(chains).keys()
 
 
 def main(args):
@@ -48,35 +37,61 @@ def main(args):
 	help="Specify path+name for the list of benchmark. Default is ./list_to_change" ,)
 
     parser.add_option('--native',
-	action="store", default=_script_path_+'native',
+	action="store", default=_script_path_+'/native',
 	help="Specify path+name for the list of benchmark. Default is ./native.pdb" ,)
 
     (options, args) = parser.parse_args(args=args[1:])
     global Options; Options = options
 
 
-    pose = Pose()
+
+
+
+    try:
+	targets_list_file = open( Options.pdb_list, 'r' )
+    except IOError as e: 
+	print (  "({})".format(e)         )
+	sys.exit()
+    else:
+	print "Targets List: "+Options.pdb_list
+	targets_list_file.close()
+
 
     native_pose = Pose()
     pose_from_pdb(native_pose, Options.native)
+    native_total_sequence = pose.sequence() # all the AAs in the native pose
 
 
-    uniq_chain_ids=get_uniq_chain_ids(native_pose)
 
-    print "Targets List: "+Options.pdb_list
-    targets_list_file = open( Options.pdb_list, 'r' )
+    pose = Pose()
 
-    # loop over all the 53 PDB targets in the Benchmark
+    # loop over all the mdoels that should be inspected
     for line in targets_list_file:  
 	target_name = line.split()[0]
 	print 
 	print "****************** Working on Target " + target_name + "  *************************************" 
 
-	n_chains=get_uniq_chain_ids(target_name)
-	if uniq_chain_ids !=
+	pose.clear()
+	pose_from_pdb(pose, _script_path_+target_name)
 
+	model_uniq_chains==get_uniq_chain_ids(pose)
 
-	# loop over all the mdoels that should be inspected
+	for chain_id in model_uniq_chains:
+	    seq = pose.chain_sequence(chain_id)
+	    try:
+		start_n = native_total_sequence.index(seq)
+	    except ValueError as e:
+		print (      "({})".format(e)           )
+		print "Could not find the sequence in native pose"
+		print "query_sequence:  "+seq
+		print "native_sequence: "+native_total_sequence
+		sys.exit()
+	    else:
+		end_n = start_n + len(seq) - 1 
+
+	    truncated_pose = Pose( pose, start_id+1, end_id+1); # Rosetta style, starting from index 1
+	    truncated_pose.dump_pdb(chain_id+".pdb")
+	    truncated_pose.clear()
 
 
 	for model in _models_to_check_:  
