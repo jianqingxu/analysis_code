@@ -129,24 +129,24 @@ _models_to_check_ = {'Grafted'  : "/output/details/1.pdb",
 
 profit_templates = { 'L': '''reference "%(prefix)s/template.light_heavy.pdb"
 	mobile "%(prefix)s/template.threaded.FRL.pdb"
-	atoms ca
-	zone L10-L23
-	zone L35-L49
-	zone L57-L66
-	zone L69-L88
-	zone L98-L100
+	ATOM C,CA,N,O
+	ZONE L5-L23
+	ZONE L35-L49
+	ZONE L57-L88
+	ZONE L98-L100
 	fit
 	write "%(prefix)s/fitted.L.pdb"
 	quit''',
 	'H': '''reference "%(prefix)s/template.light_heavy.pdb"
 	mobile "%(prefix)s/template.threaded.FRH.pdb"
 	atoms ca
-	zone H10-H25
-	zone H36-H49
-	zone H66-H72
-	zone H74-H82
-	zone H83-H94
-	zone H103-H105
+	ATOM C,CA,N,O
+	ZONE H5-H25
+	ZONE H36-H49
+	ZONE H66-H72
+	ZONE H74-H82
+	ZONE H83-H94
+	ZONE H103-H105
 	fit
 	write "%(prefix)s/fitted.H.pdb"
 	quit''' 
@@ -158,26 +158,25 @@ def align_to_native_by_framework(pose, native_pose):
 
 
 
-def check_things(pose, native_pose, scorefxn):
+def check_things(pose, native_pose):
     # loop over L1, L2, L3, H1, H2
     # Four Stem Residues A-B-|-C-D
-
-    scorefxn(pose)
-    scorefxn(native_pose)
+    
+    gf_st =  _grafting_stems_
 
     terminus=['nter', 'cter']
-    for stems in _grafting_stems_:
+    for stems in gt_st:
 
 	for ter in terminus:
-	    print _grafting_stems_[stems][ter]
+	    print gf_st[stems][ter]
 
-	    ch_id    = _grafting_stems_[stems]['ch_id']
+	    ch_id    = gf_st[stems]['ch_id']
 
 	    # B-|-C
-	    A_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems][ter]['pdb_nums'][0])
-	    B_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems][ter]['pdb_nums'][1])
-	    C_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems][ter]['pdb_nums'][2])
-	    D_pose_num = pose.pdb_info().pdb2pose(ch_id, _grafting_stems_[stems][ter]['pdb_nums'][3])
+	    A_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]['pdb_nums'][0])
+	    B_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]['pdb_nums'][1])
+	    C_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]['pdb_nums'][2])
+	    D_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]['pdb_nums'][3])
 
 
 	    B_N  = AtomID(1, B_pose_num)
@@ -189,13 +188,13 @@ def check_things(pose, native_pose, scorefxn):
 	    C_C  = AtomID(3, C_pose_num)
 
 	    #check_C_N_bond
-	    _grafting_stems_[stems][ter]["C_N_bond"] = pose.conformation().bond_length(B_C, C_N)
+	    gf_st[stems][ter]["C_N_bond"] = pose.conformation().bond_length(B_C, C_N)
 
 	    #check_CA_C_N()
-	    _grafting_stems_[stems][ter]["CA_C_N_angle"] = pose.conformation().bond_angle(B_CA, B_C, C_N)
+	    gf_st[stems][ter]["CA_C_N_angle"] = pose.conformation().bond_angle(B_CA, B_C, C_N)
 
 	    #check_C_N_CA()
-	    _grafting_stems_[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_C, C_N, C_CA)
+	    gf_st[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_C, C_N, C_CA)
 
 	    #check_d_rmsd()
 
@@ -207,12 +206,14 @@ def check_things(pose, native_pose, scorefxn):
 	    model_stem_score+=pose.energies().residue_total_energy(D_pose_num)
 
 	    native_stem_score=0.0
-	    native_stem_score+=pose.energies().residue_total_energy(A_pose_num)
-	    native_stem_score+=pose.energies().residue_total_energy(B_pose_num)
-	    native_stem_score+=pose.energies().residue_total_energy(C_pose_num)
-	    native_stem_score+=pose.energies().residue_total_energy(D_pose_num)
+	    native_stem_score+=native_pose.energies().residue_total_energy(A_pose_num)
+	    native_stem_score+=native_pose.energies().residue_total_energy(B_pose_num)
+	    native_stem_score+=native_pose.energies().residue_total_energy(C_pose_num)
+	    native_stem_score+=native_pose.energies().residue_total_energy(D_pose_num)
 
-	    _grafting_stems_[stems][ter]["d_score"]=model_stem_score-native_stem_score
+	    gf_st[stems][ter]["d_score"]=model_stem_score-native_stem_score
+
+    return gf_st
 
 #def output_results():
 
@@ -246,23 +247,22 @@ def main(args):
 	target_name = line.split()[0]
 	print 
 	print "****************** Working on Target " + target_name + "  *************************************" 
+	native_file_name = _script_path_ + "/" + target_name + "/" + target_name + ".renum.best_packed.pdb"
+	native_pose.clear(); pose_from_pdb(native_pose, native_file_name)
+	scorefxn(native_pose)
 
 	# loop over all the mdoels that should be inspected
-	native_file_name = _script_path_ + "/" + target_name + "/" + target_name + ".renum.best_packed.pdb"
-	native_pose.clear(); 
-	pose_from_pdb(native_pose, native_file_name)
-
 	for model in _models_to_check_:  
 	    file_name = _script_path_ + "/" + target_name + _models_to_check_[model]
 	    print "          " + file_name
-	    pose.clear(); 
-	    pose_from_pdb(pose, file_name)
+	    pose.clear(); pose_from_pdb(pose, file_name)
+	    scorefxn(pose)
 
 	    #align to the native structure
 	    align_to_native_by_framework(pose, native_pose)
 
 	    #do all the measurement
-	    check_things(pose,native_pose, scorefxn)
+	    gf_st =  check_things(pose, native_pose)
 	
 	    #output_results()
 
