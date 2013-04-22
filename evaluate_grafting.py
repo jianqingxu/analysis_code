@@ -252,6 +252,7 @@ def main(args):
 	scorefxn(native_pose)
 
 	# loop over all the mdoels that should be inspected
+	# like 1.pdb, 2.pdb, 3.pdb, 4.pdb, and grafted.relaxed.pdb
 	for model in _models_to_check_:  
 	    file_name = _script_path_ + "/" + target_name + _models_to_check_[model]
 	    print "          " + file_name
