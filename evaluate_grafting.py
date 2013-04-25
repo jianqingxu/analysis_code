@@ -9,6 +9,7 @@
 import optparse
 import os, sys
 import json
+import commands
 
 from rosetta import *
 init()
@@ -50,7 +51,7 @@ _grafting_CDRs_ = {
 
 
 _grafting_stems_ ={
-			"L1_stem" : {"ch_id":"L",
+		    "L1_stem" : {"ch_id":"L",
 				 "nter" : { "pdb_nums" : [20, 21, 22, 23], 
 				            "C_N_bond" : 0,
 					    "CA_C_N_angle" : 0,
@@ -58,7 +59,7 @@ _grafting_stems_ ={
 					    "d_rmsd" : 0,
 					    "d_score" :0
 					  },
-				 "cter" : { "pdb_num" : [35, 36, 37, 38],
+				 "cter" : { "pdb_nums" : [35, 36, 37, 38],
 				            "C_N_bond" : 0,
 					    "CA_C_N_angle" : 0,
 					    "C_N_CA_angle" : 0,
@@ -151,83 +152,112 @@ _models_to_check_ ={
 		}
 
 
-
 _profit_templates_ ={
-"L":'''reference %s
+"L1_stem":'''reference %s
 mobile %s 
 ATOM C,CA,N,O 
-ZONE L5-L23 
-ZONE L35-L49 
-ZONE L57-L88 
-ZONE L98-L100 
+ZONE L16-L19 
+ZONE L39-L42 
 fit 
-write %s.L_fitted.pdb 
+write %s
 quit''',
-"H":'''reference %s 
+"L2_stem":'''reference %s
 mobile %s 
 ATOM C,CA,N,O 
-ZONE H5-H25 
-ZONE H36-H49 
-ZONE H66-H94 
-ZONE H103-H105 
+ZONE L42-L45 
+ZONE L61-L64
 fit 
-write %s.H_fitted.pdb
-quit''' 
+write %s
+quit''',
+"L3_stem":'''reference %s
+mobile %s 
+ATOM C,CA,N,O 
+ZONE L81-L84 
+ZONE L102-L105
+fit 
+write %s
+quit''',
+"H1_stem":'''reference %s
+mobile %s 
+ATOM C,CA,N,O 
+ZONE H18-H21 
+ZONE H40-H43
+fit 
+write %s
+quit''',
+"H2_stem":'''reference %s
+mobile %s 
+ATOM C,CA,N,O 
+ZONE H42-H45 
+ZONE H70-H73
+fit 
+write %s
+quit''',
 }
 
 
-def align_to_native_by_framework(pose, native_pose, chain):
+def align_to_native_by_framework(pose, native_pose, stems):
 
 	native_path_name = native_pose.pdb_info().name()
 	model_path_name  = pose.pdb_info().name()
 	
+	print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+	print model_path_name
+	print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+
 	native_name = native_path_name[native_path_name.rfind("/")+1: ]
 	model_name  =  model_path_name[model_path_name.rfind("/")+1: ]
-	
 
 	native_path = native_path_name[0: native_path_name.rfind("/")+1 ]
 	model_path  =  model_path_name[0: model_path_name.rfind("/")+1 ]
+
+	analysis_path = native_path+"analysis/"
+	if not os.path.exists( analysis_path ):
+		os.makedirs(analysis_path)
 	
-	profit_in_file  =  native_path + "profit" + chain + ".in"
-	profit_out_file =  native_path + "profit" + chain + ".out"
+	profit_in_file  =  analysis_path + "profit_" + stems + "_" + model_name[:-4] + ".in"
+	profit_out_file =  analysis_path + "profit_" + stems + "_" + model_name[:-4] + ".out"
+
+	aligned_model_path_name = analysis_path + model_name[:-4] + "_" + stems + "_fitted.pdb"
+
+
+	print profit_in_file 
+	print profit_out_file 
+	print aligned_model_path_name
 
 	with file(profit_in_file, 'w') as f:
-		f.write(_profit_templates_[chain] % (native_path_name, model_path_name, native_path+model_name[:-4]) )
+		f.write(   _profit_templates_[stems] % (native_path_name, model_path_name, aligned_model_path_name)   )
 
 
-	#f_name = '\ '.join(f_name.split())
-	sys.exit()
-	'''
-	commandline = '%s < %s.in > %s.out' % (Options.profit, f_name, f_name)
-	res, output = commands.getstatusoutput(commandline);
-	if res: print commandline, output; sys.exit(1)
+	commandline = '%s < %s > %s' % (Options.profit, profit_in_file, profit_out_file)
+	status, output = commands.getstatusoutput(commandline);
 
-	pathPrefix = '\ '.join(vars()['prefix'].split())
-        pathPrefix = pathPrefix[:-1] if pathPrefix.endswith('/') else pathPrefix
-	res, output = commands.getstatusoutput('cat {0}/fitted.L.pdb {0}/fitted.H.pdb > {0}/FR.pdb'.format(pathPrefix))
+	aligned_pose = Pose()
+	pose_from_pdb(aligned_pose, aligned_model_path_name); _scorefxn_(aligned_pose)
 
-        #res, output = commands.getstatusoutput('cat %(prefix)s/fitted.L.pdb %(prefix)s/fitted.H.pdb > %(prefix)s/FR.pdb' % vars())
-	if res: print output;  sys.exit(1)
-	'''
-
+	return aligned_pose
 
 
 # checking 1.pdb or 2.pdb or 3.pdb or 4.pdb in pose
 def check_things(pose, native_pose):
 
 	gf_st =  _grafting_stems_
-	terminus=['nter', 'cter']
 
-	# loop over L1, L2, L3, H1, H2
-    # Four Stem Residues A-B-|-C-D
+	# loop over L1_stem, L2_stem, L3_stem, H1_stem, H2_stem
+	# Four Stem Residues A-B-|-C-D
 	for stems in gf_st:
 
+		aligned_pose = align_to_native_by_framework(pose, native_pose, stems)
+
 		# loop over 'nter' and 'cter'
+		terminus=['nter', 'cter']
 		for ter in terminus:
 
 			ch_id = gf_st[stems]['ch_id']
 
 			# define    B-|-C
+			print  stems, ter
+
 			A_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][0])
 			B_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][1])
 			C_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][2])
@@ -251,12 +281,10 @@ def check_things(pose, native_pose):
 			gf_st[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_C, C_N, C_CA)
 
 			#check_d_rmsd()
-			print stems[0]
-			if stems[0]== "H":
-				align_to_native_by_framework(pose, native_pose, "H")
-			if stems[0]== "L":
-				align_to_native_by_framework(pose, native_pose, "L")
-
+			loop = Loop( A_pose_num, D_pose_num, B_pose_num )
+			loops= Loops(); loops.add_loop(loop)
+			rms = loop_rmsd(aligned_pose, native_pose, loops, True)
+			gf_st[stems][ter]["d_rmsd"] = rms
 
 			#check_d_score()
 			model_stem_score=0.0
@@ -307,6 +335,7 @@ def main(args):
     for line in targets_list_file:
 		target_name = line.split()[0]
 		print 
+		print "********************************************************************************"
 		print "****************** Working on Target " + target_name + "  *************************************"
 		native_file_path = _script_path_ + "/" + target_name + "/"
 		native_file_name = native_file_path + target_name + ".renum.best_packed.pdb"
@@ -320,10 +349,12 @@ def main(args):
 		
 			# read the model 1.pdb, 2.pdb, 3.pdb, 4.pdb and grafted.relaxed.pdb
 			file_name = _script_path_ + "/" + target_name + _models_to_check_[model]
+			print 
+			print "          ####################################################################################################"
 			print "          ###############" + file_name
 			pose.clear(); pose_from_pdb(pose, file_name); _scorefxn_(pose)
 
-	    	#do all the measurements
+			#do all the measurements
 			gf_st =  check_things(pose, native_pose)
 
 			results.append(gf_st)
