@@ -335,6 +335,19 @@ def get_all_results(All_Targets):
 
 
 
+
+def calculate_distribution(models_results)
+
+    models_distribution = {}
+
+    for model in sorted(models_results):
+	distribution =[]
+
+	models_distribution = copy.deepcopy(distribution)
+
+
+
+
 # for one particular PDB target
 def output_results(All_Targets):
 
@@ -423,18 +436,10 @@ def main(args):
 			values[model] = copy.deepcopy(   check_things(pose, native_pose)    )
 
 		All_Targets[target_name] = copy.deepcopy( values )
+
     models_results = copy.deepcopy (  get_all_results(All_Targets)   )
 
-    for model in sorted(models_results):  
-	print models_results[model]
-	print 
-	print 
-    sys.exit()
-
-
-
-#    output_results(All_Targets)
-
+    calculate_distribution(models_results)
 
 
 
