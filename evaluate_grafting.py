@@ -310,48 +310,39 @@ _results_={
             }
 
 
-def get_all_results_for_this_Ab_target(values):
+def get_all_results(All_Targets):
+
+    models_results = {}
 
 
-    models_results={}
+    # loop over l1.pdb, l2.pdb, l3.pdb, l4.pdb ...
+    for model in sorted(_models_to_check_):
 
-
-    # loop over 1.pdb, 2.pdb, 3.pdb, 4.pdb ...
-    for model in sorted(values):
-
-	print "Working on ", model
-	# loop over "C_N_bond", "CA_C_N_angle"... etc
 	results = copy.deepcopy(  _results_  )
-	for xxxx in results:
-	    # loop over L1_stem, L2_stem, L3_stem, H1_stem, H2_stem
-	    for stem in values[model]:
-		# loop over cter and nter
-		for ter in ["nter", "cter"]:
-		    print model, stem, ter, xxxx
-		    results[xxxx].append(     values[model][stem][ter][xxxx]    )
 
-	models_results[model] = copy.deepcopy( results   )
+	#loop over "C_N_bond", "CA_C_N_angle", "C_N_CA_angle", "d_rmsd", "d_score"
+	for result in results:
+
+	    for target in All_Targets:
+		for stem in All_Targets[target][model]:
+		    for ter in ["nter", "cter"]:
+			results[result].append  ( All_Targets[target][model][stem][ter][result] )
+
+	models_results[model] = copy.deepcopy(results)
 
 
     return models_results
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 # for one particular PDB target
 def output_results(All_Targets):
 
+    final_results = copy.deepcopy(  _results_  )
+
+    for target in All_Targets:
+	for model in All_Targets[target]:
+	    All_Targets[target][model]
     # results of 1.pdb, 2.pdb, 3.pdb, 4pdb. etc are in the results
 #    for model in sorted(values):
 #	print "          ###############    outputting results for model " + _models_to_check_[model] + " ################# "
@@ -431,11 +422,18 @@ def main(args):
 			#do all the measurements
 			values[model] = copy.deepcopy(   check_things(pose, native_pose)    )
 
-		All_Targets[target_name] = copy.deepcopy(  get_all_results_for_this_Ab_target(values)  )
+		All_Targets[target_name] = copy.deepcopy( values )
+    models_results = copy.deepcopy (  get_all_results(All_Targets)   )
+
+    for model in sorted(models_results):  
+	print models_results[model]
+	print 
+	print 
+    sys.exit()
 
 
 
-    output_results(All_Targets)
+#    output_results(All_Targets)
 
 
 
