@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ## @file   evaluate_grafting.py
-## @brief  analysis to evalute the antibody CDR grafting results
+## @brief  analysis to evalute the antibody CDR grafting Results
 ## @author Jianqing Xu
 ## @date   Last Modified: Apr.11th, 2013 by JQX
 #
@@ -10,6 +10,8 @@ import optparse
 import os, sys
 import json
 import commands
+import collections
+import copy
 
 from rosetta import *
 init()
@@ -47,7 +49,6 @@ _grafting_CDRs_ = {
 		              } 
 		   } # H3 is not on the list
 '''
-
 
 
 _grafting_stems_ ={
@@ -139,16 +140,16 @@ _grafting_stems_ ={
 _script_path_ = os.path.dirname( os.path.realpath(__file__) )
 
 
-_scorefxn_=create_score_function_ws_patch('standard', 'score12')
+_scorefxn_=create_score_function_ws_patch("standard", "score12")
 
 
 
 _models_to_check_ ={
-			'Grafted'  : "/output/details/1.pdb",
-			'Grafted_Min' : "/output/details/2.pdb",
-			'Grafted_Min_Opt' : "/output/details/3.pdb",
-			'Grafted_Min_Opt_Min': "/output/details/4.pdb",
-			'Grafted_Min_Opt_Min_Relaxed': "/output/grafted.relaxed.pdb",
+			"Grafted"  : "/output/details/1.pdb",
+			"Grafted_Min" : "/output/details/2.pdb",
+			"Grafted_Min_Opt" : "/output/details/3.pdb",
+			"Grafted_Min_Opt_Min": "/output/details/4.pdb",
+			"Grafted_Min_Opt_Min_Relaxed": "/output/grafted.relaxed.pdb",
 		}
 
 
@@ -201,10 +202,6 @@ def align_to_native_by_framework(pose, native_pose, stems):
 	native_path_name = native_pose.pdb_info().name()
 	model_path_name  = pose.pdb_info().name()
 	
-	print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-	print model_path_name
-	print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
-
 	native_name = native_path_name[native_path_name.rfind("/")+1: ]
 	model_name  =  model_path_name[model_path_name.rfind("/")+1: ]
 
@@ -219,11 +216,6 @@ def align_to_native_by_framework(pose, native_pose, stems):
 	profit_out_file =  analysis_path + "profit_" + stems + "_" + model_name[:-4] + ".out"
 
 	aligned_model_path_name = analysis_path + model_name[:-4] + "_" + stems + "_fitted.pdb"
-
-
-	print profit_in_file 
-	print profit_out_file 
-	print aligned_model_path_name
 
 	with file(profit_in_file, 'w') as f:
 		f.write(   _profit_templates_[stems] % (native_path_name, model_path_name, aligned_model_path_name)   )
@@ -241,44 +233,46 @@ def align_to_native_by_framework(pose, native_pose, stems):
 # checking 1.pdb or 2.pdb or 3.pdb or 4.pdb in pose
 def check_things(pose, native_pose):
 
-	gf_st =  _grafting_stems_
+	gf_st =  copy.deepcopy(_grafting_stems_)
 
 	# loop over L1_stem, L2_stem, L3_stem, H1_stem, H2_stem
 	# Four Stem Residues A-B-|-C-D
 	for stems in gf_st:
 
-		aligned_pose = align_to_native_by_framework(pose, native_pose, stems)
 
-		# loop over 'nter' and 'cter'
-		terminus=['nter', 'cter']
+		aligned_pose = align_to_native_by_framework(pose, native_pose, stems)
+		print "                            &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
+		print "                            &&&&&&&&&&&&&&&&&&&&&&&&&&&  Finish Reading ....  ", aligned_pose.pdb_info().name()
+
+		# loop over "nter" and "cter"
+		terminus=["nter", "cter"]
 		for ter in terminus:
 
-			ch_id = gf_st[stems]['ch_id']
+			ch_id = gf_st[stems]["ch_id"]
 
 			# define    B-|-C
-			print  stems, ter
-
 			A_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][0])
 			B_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][1])
 			C_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][2])
 			D_pose_num = pose.pdb_info().pdb2pose(ch_id, gf_st[stems][ter]["pdb_nums"][3])
 
-			B_N  = AtomID(1, B_pose_num)  # in Rosetta, index starts from 1
-			B_CA = AtomID(2, B_pose_num)
-			B_C  = AtomID(3, B_pose_num)
 
-			C_N  = AtomID(1, C_pose_num)
-			C_CA = AtomID(2, C_pose_num)
-			C_C  = AtomID(3, C_pose_num)
+			B_n  = AtomID(1, B_pose_num)  # in Rosetta, index starts from 1
+			B_ca = AtomID(2, B_pose_num)
+			B_c  = AtomID(3, B_pose_num)
+
+			C_n  = AtomID(1, C_pose_num)
+			C_ca = AtomID(2, C_pose_num)
+			C_c  = AtomID(3, C_pose_num)
 
 			#check_C_N_bond
-			gf_st[stems][ter]["C_N_bond"] = pose.conformation().bond_length(B_C, C_N)
+			gf_st[stems][ter]["C_N_bond"] = pose.conformation().bond_length(B_c, C_n)
 
 			#check_CA_C_N()
-			gf_st[stems][ter]["CA_C_N_angle"] = pose.conformation().bond_angle(B_CA, B_C, C_N)
+			gf_st[stems][ter]["CA_C_N_angle"] = pose.conformation().bond_angle(B_ca, B_c, C_n)
 
 			#check_C_N_CA()
-			gf_st[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_C, C_N, C_CA)
+			gf_st[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_c, C_n, C_ca)
 
 			#check_d_rmsd()
 			loop = Loop( A_pose_num, D_pose_num, B_pose_num )
@@ -304,7 +298,41 @@ def check_things(pose, native_pose):
 	return gf_st
 
 
-#def output_results(results):
+
+
+
+
+
+
+# for one particular PDB target
+def output_results(values):
+
+    # results of 1.pdb, 2.pdb, 3.pdb, 4pdb. etc are in the results
+    for model in sorted(values):
+	print "          ###############    outputting results for model " + _models_to_check_[model] + " ################# "
+
+	print model, "H1_stem", values[model]["H1_stem"]["nter"]["C_N_bond"]
+
+	print ""
+
+
+
+	# loop over stems L1_stem, L2_stem,...
+#	for stem in values[model]:
+
+	    # loop over nter and cter
+#	    terminus=['nter', 'cter']
+#	    for ter in terminus:
+	    
+
+
+
+
+
+
+
+
+
 
 
 def main(args):
@@ -344,8 +372,8 @@ def main(args):
 
 		# loop over all the mdoels that should be inspected
 		# like 1.pdb, 2.pdb, 3.pdb, 4.pdb, and grafted.relaxed.pdb
-		results=[]
-		for model in _models_to_check_ :
+		values = {}
+		for model in sorted(_models_to_check_) :   # the sort here is to sort the order of keys
 		
 			# read the model 1.pdb, 2.pdb, 3.pdb, 4.pdb and grafted.relaxed.pdb
 			file_name = _script_path_ + "/" + target_name + _models_to_check_[model]
@@ -355,12 +383,10 @@ def main(args):
 			pose.clear(); pose_from_pdb(pose, file_name); _scorefxn_(pose)
 
 			#do all the measurements
-			gf_st =  check_things(pose, native_pose)
-
-			results.append(gf_st)
+			values[model] = copy.deepcopy(   check_things(pose, native_pose)    )
 
 
-		#output_results(results)
+		output_results(values)
 
 
 
