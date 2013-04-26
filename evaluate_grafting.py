@@ -10,7 +10,6 @@ import optparse
 import os, sys
 import json
 import commands
-import collections
 import copy
 
 from rosetta import *
@@ -49,6 +48,7 @@ _grafting_CDRs_ = {
 		              } 
 		   } # H3 is not on the list
 '''
+
 
 
 _grafting_stems_ ={
@@ -301,17 +301,62 @@ def check_things(pose, native_pose):
 
 
 
+_results_={
+	    "C_N_bond"     : [],
+            "CA_C_N_angle" : [],
+            "C_N_CA_angle" : [],
+            "d_rmsd"       : [],
+            "d_score"      : []
+            }
+
+
+def get_avg_for_this_Ab_target(values):
+
+
+    models_results={}
+
+
+    # loop over 1.pdb, 2.pdb, 3.pdb, 4.pdb ...
+    for model in sorted(values):
+
+	print "Working on ", model
+	# loop over "C_N_bond", "CA_C_N_angle"... etc
+	results = copy.deepcopy(  _results_  )
+	for xxxx in results:
+	    # loop over L1_stem, L2_stem, L3_stem, H1_stem, H2_stem
+	    for stem in values[model]:
+		# loop over cter and nter
+		for ter in ["nter", "cter"]:
+		    print model, stem, ter, xxxx
+		    results[xxxx].append(     values[model][stem][ter][xxxx]    )
+
+	models_results[model] = copy.deepcopy( results   )
+    print models_results
+    sys.exit()
+    return models_results
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 # for one particular PDB target
-def output_results(values):
+def output_results(All_Targets):
 
     # results of 1.pdb, 2.pdb, 3.pdb, 4pdb. etc are in the results
-    for model in sorted(values):
-	print "          ###############    outputting results for model " + _models_to_check_[model] + " ################# "
+#    for model in sorted(values):
+#	print "          ###############    outputting results for model " + _models_to_check_[model] + " ################# "
 
-	print model, "H1_stem", values[model]["H1_stem"]["nter"]["C_N_bond"]
+#	print model, "H1_stem", values[model]["H1_stem"]["nter"]["C_N_bond"]
 
 	print ""
 
@@ -360,6 +405,7 @@ def main(args):
     targets_list_file = open( Options.benchmark_pdb_list, 'r' )
 
     # loop over all the 53 PDB targets in the Benchmark
+    All_Targets={}
     for line in targets_list_file:
 		target_name = line.split()[0]
 		print 
@@ -385,8 +431,11 @@ def main(args):
 			#do all the measurements
 			values[model] = copy.deepcopy(   check_things(pose, native_pose)    )
 
+		All_Targets[target_name] = copy.deepcopy(  get_avg_for_this_Ab_target(values)  )
 
-		output_results(values)
+
+
+    output_results(All_Targets)
 
 
 
