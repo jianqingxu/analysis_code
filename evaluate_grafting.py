@@ -310,7 +310,7 @@ _results_={
             }
 
 
-def get_avg_for_this_Ab_target(values):
+def get_all_results_for_this_Ab_target(values):
 
 
     models_results={}
@@ -331,8 +331,8 @@ def get_avg_for_this_Ab_target(values):
 		    results[xxxx].append(     values[model][stem][ter][xxxx]    )
 
 	models_results[model] = copy.deepcopy( results   )
-    print models_results
-    sys.exit()
+
+
     return models_results
 
 
@@ -431,7 +431,7 @@ def main(args):
 			#do all the measurements
 			values[model] = copy.deepcopy(   check_things(pose, native_pose)    )
 
-		All_Targets[target_name] = copy.deepcopy(  get_avg_for_this_Ab_target(values)  )
+		All_Targets[target_name] = copy.deepcopy(  get_all_results_for_this_Ab_target(values)  )
 
 
 
