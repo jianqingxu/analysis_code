@@ -408,13 +408,27 @@ def output_final_distribution_results( models_distribution, native_pose):
 	for result in sorted(models_distribution[model]):
 	    fname = path+model+"_"+result+"_distribution"
 	    f = open(fname,'w')
-	    if len(models_distribution[model][result]["x_values"]) != len(models_distribution[model][result]["y_values"]):
+
+	    tot_num_x = len(models_distribution[model][result]["x_values"])
+	    tot_num_y = len(models_distribution[model][result]["y_values"]) 
+	    if tot_num_x != tot_num_y:
 		print "The length in X and Y dismatches !!!!"
 		sys.exit()
-	    for i in range(0, len (models_distribution[model][result]["x_values"])) :
+
+	    x_less = str(  models_distribution[model][result]["x_values"][0]- _bin_creteria_[result]  )
+	    y_less = str(0.0)
+	    f.write('%s  %s\n' % (x_less, y_less) )
+
+	    for i in range( 0, tot_num_x  ) :
 		str1=str(   str(models_distribution[model][result]["x_values"][i])  )
 		str2=str(   str(models_distribution[model][result]["y_values"][i])  )
 		f.write('%s  %s\n' % (str1, str2) )
+
+
+	    x_more = str(  models_distribution[model][result]["x_values"][tot_num_x-1]+ _bin_creteria_[result]  )
+	    y_more = str(0.0)
+	    f.write('%s  %s\n' % (x_more, y_more) )
+
 	    f.close()
 
 	    
