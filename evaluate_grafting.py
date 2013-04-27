@@ -339,61 +339,50 @@ def get_all_results(All_Targets):
     return models_results
 
 
-def histogram(data, min_bound, max_bound, bin_size):
-    num_bins = int(  (float(max_bound) - float(min_bound)) /float( bin_size) ) + 1
+def histogram(data, bin_size):
+
+    max_bound = float(max(data))
+    min_bound = float(min(data))
+    num_bins = int(  (max_bound-min_bound)/float(bin_size)  ) + 1
+
     hist = [0.0 for x in range(num_bins)]
 
     for num in data:
 	bin_location=int(  (float(num) - float(min_bound))/float(bin_size)  ) 
 	hist[ bin_location ] += 1.0
 
+    x_values = [0.0 for x in range(num_bins)] 
     for i in range(0, num_bins):
 	hist[i] /= float(len(data)) 
+	x_values[i] = min_bound + float(i)*float(bin_size)+0.5*float(bin_size)
 
-    return hist
 
-_distribution_creteria_={
-	    "C_N_bond"     : {
-			    "min_bound": 0.0,
-			    "max_bound": 8.0,
-			    "bin_size":  0.1
-		},
-            "CA_C_N_angle" : {
-			    "min_bound":90.0, 
-			    "max_bound":140.0, 
-			    "bin_size": 0.1
-		
-		},
-            "C_N_CA_angle" : {
-			    "min_bound":90.0, 
-			    "max_bound":140.0, 
-			    "bin_size":0.1
-		},
-            "d_rmsd"       : {
-			    "min_bound":0.0, 
-			    "max_bound":8.0, 
-			    "bin_size":0.1
-		},
-            "d_score"      : {
-			    "min_bound":-10.0, 
-			    "max_bound":100.0, 
-			    "bin_size":0.1
-		}
+
+    histogram_xy = {"x_values": copy.deepcopy(x_values), 
+		    "y_values": copy.deepcopy(hist)  }
+
+    return histogram_xy
+
+
+
+_bin_creteria_={ "C_N_bond"     : 0.01 ,
+                 "CA_C_N_angle" : 0.1 ,
+                 "C_N_CA_angle" : 0.1 ,
+                 "d_rmsd"       : 0.1 ,
+                 "d_score"      : 0.1 
 	}
 
 def calculate_distribution(models_results):
-    models_distribution = {}
+    models_distribution = { }
 
     # loop over 1.pdb, 2.pdb, 3.pdb ...
     for model in sorted(models_results):
-	print model
+	#print model
 	distribution = {}
 	for result in sorted(models_results[model]):
-	    print result 
-	    min_bound = copy.deepcopy(  _distribution_creteria_[result]["min_bound"] )
-	    max_bound = copy.deepcopy(  _distribution_creteria_[result]["max_bound"] )
-	    bin_size  = copy.deepcopy(  _distribution_creteria_[result]["bin_size"]  )
-	    distribution[result] = copy.deepcopy( histogram(models_results[model][result], min_bound, max_bound, bin_size) )
+	    #print result 
+	    bin_size  = copy.deepcopy(  _bin_creteria_[result]  )
+	    distribution[result] = copy.deepcopy( histogram(models_results[model][result], bin_size) )
 	    #print models_results[model][result]
 	    #print 
 	    #print
@@ -405,18 +394,26 @@ def calculate_distribution(models_results):
 
 
 
-def output_final_distribution_results(models_distribution, native_pose):
+def output_final_distribution_results( models_distribution, native_pose):
     native_path_name = native_pose.pdb_info().name()
-    native_path = native_path_name[0: native_path_name.rfind("/")+1 ]
-    analysis_path = native_path+"analysis/"
+    native_path = native_path_name[0: native_path_name.rfind("/") ]
+    path = native_path[0: native_path.rfind("/") +1 ] + "analysis/"
+
+    if not os.path.exists( path ):
+	os.makedirs(path)
+
+
 
     for model in sorted(models_distribution):
 	for result in sorted(models_distribution[model]):
-	    fname = analysis_path+model+"_"+result+"_distribution"
+	    fname = path+model+"_"+result+"_distribution"
 	    f = open(fname,'w')
-	    for i in range(0, len (models_distribution[model][result])) :
-		str1=str( float(i+1)*_distribution_creteria_[result]["bin_size"] )
-		str2=str(   str(models_distribution[model][result])  )
+	    if len(models_distribution[model][result]["x_values"]) != len(models_distribution[model][result]["y_values"]):
+		print "The length in X and Y dismatches !!!!"
+		sys.exit()
+	    for i in range(0, len (models_distribution[model][result]["x_values"])) :
+		str1=str(   str(models_distribution[model][result]["x_values"][i])  )
+		str2=str(   str(models_distribution[model][result]["y_values"][i])  )
 		f.write('%s  %s\n' % (str1, str2) )
 	    f.close()
 
@@ -453,7 +450,10 @@ def main(args):
 		target_name = line.split()[0]
 		print 
 		print "********************************************************************************"
-		print "****************** Working on Target " + target_name + "  *************************************"
+		print "*                                                                              *"
+		print "*                  Working on Target " + target_name + "                                      *"
+		print "*                                                                              *"
+		print "********************************************************************************"
 		native_file_path = _script_path_ + "/" + target_name + "/"
 		native_file_name = native_file_path + target_name + ".renum.best_packed.pdb"
 
