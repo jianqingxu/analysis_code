@@ -11,6 +11,7 @@ import os, sys
 import json
 import commands
 import copy
+import math
 
 from rosetta import *
 init()
@@ -269,10 +270,10 @@ def check_things(pose, native_pose):
 			gf_st[stems][ter]["C_N_bond"] = pose.conformation().bond_length(B_c, C_n)
 
 			#check_CA_C_N()
-			gf_st[stems][ter]["CA_C_N_angle"] = pose.conformation().bond_angle(B_ca, B_c, C_n)
+			gf_st[stems][ter]["CA_C_N_angle"] = math.degrees( pose.conformation().bond_angle(B_ca, B_c, C_n) )
 
 			#check_C_N_CA()
-			gf_st[stems][ter]["C_N_CA_angle"] = pose.conformation().bond_angle(B_c, C_n, C_ca)
+			gf_st[stems][ter]["C_N_CA_angle"] = math.degrees( pose.conformation().bond_angle(B_c, C_n, C_ca) )
 
 			#check_d_rmsd()
 			loop = Loop( A_pose_num, D_pose_num, B_pose_num )
@@ -331,55 +332,71 @@ def get_all_results(All_Targets):
 	models_results[model] = copy.deepcopy(results)
 
 
+    for model in sorted(models_results):
+	print model
+	print models_results[model]
+	print ""
+	print ""
+
     return models_results
 
 
+def histogram(data, min_bound, max_bound, bin_size):
+    num_bins = int(  (float(max_bound) - float(min_bound)) /float( bin_size) ) + 1
+    print "num_bins=", num_bins
+    hist = [0.0 for x in range(num_bins)]
+
+    for num in data:
+	bin_location=int(  (float(num) - float(min_bound))/float(bin_size)  ) 
+	print "bin_location=", bin_location
+	hist[ bin_location ] += 1.0
+
+    for i in range(0, num_bins):
+	hist[i] /= float(len(data)) 
+
+    return hist
 
 
-def calculate_distribution(models_results)
 
+def calculate_distribution(models_results):
     models_distribution = {}
 
+    # loop over 1.pdb, 2.pdb, 3.pdb ...
     for model in sorted(models_results):
-	distribution =[]
+	distribution = {}
+	for result in sorted(models_results[model]):
+	    if result == "C_N_bond": 
+		min_bound=0.0; max_bound=10.0; bin_size=0.1
+	    if result == "CA_C_N_angle":
+		min_bound=0.0; max_bound=360.0; bin_size=0.1
+	    if result == "C_N_CA_angle":
+		min_bound=0.0; max_bound=360.0; bin_size=0.1
+	    if result == "d_rmsd":
+		min_bound=0.0; max_bound=10.0; bin_size=0.1
+	    if result == "d_score":
+		min_bound=-10000.0; max_bound=10000.0; bin_size=0.1
 
-	models_distribution = copy.deepcopy(distribution)
+	    print "Distribution of .... ", result 
+	    distribution [result] = copy.deepcopy(histogram(models_results[model][result], min_bound, max_bound, bin_size) )
+
+	models_distribution[model] = copy.deepcopy(distribution)
 
 
-
-
-# for one particular PDB target
-def output_results(All_Targets):
-
-    final_results = copy.deepcopy(  _results_  )
-
-    for target in All_Targets:
-	for model in All_Targets[target]:
-	    All_Targets[target][model]
-    # results of 1.pdb, 2.pdb, 3.pdb, 4pdb. etc are in the results
-#    for model in sorted(values):
-#	print "          ###############    outputting results for model " + _models_to_check_[model] + " ################# "
-
-#	print model, "H1_stem", values[model]["H1_stem"]["nter"]["C_N_bond"]
-
-	print ""
+    return models_distribution
 
 
 
-	# loop over stems L1_stem, L2_stem,...
-#	for stem in values[model]:
+def output_final_distribution_results(models_distribution, native_pose):
+    native_path_name = native_pose.pdb_info().name()
+    native_path = native_path_name[0: native_path_name.rfind("/")+1 ]
+    analysis_path = native_path+"analysis/"
 
-	    # loop over nter and cter
-#	    terminus=['nter', 'cter']
-#	    for ter in terminus:
-	    
-
-
-
-
-
-
-
+    for model in sorted(models_distribution):
+	for result in sorted(models_distribution[model]):
+	    fname = analysis_path+model+"_"+result+"_distribution"
+	    f = open(fname,'w')
+	    f.write(models_distribution[model][result] )
+	    f.close()
 
 
 
@@ -437,11 +454,11 @@ def main(args):
 
 		All_Targets[target_name] = copy.deepcopy( values )
 
-    models_results = copy.deepcopy (  get_all_results(All_Targets)   )
+    models_results =   get_all_results(All_Targets)  
 
-    calculate_distribution(models_results)
+    models_distribution = calculate_distribution(models_results)
 
-
+    output_final_distribution_results( models_distribution , native_pose )
 
 
 
