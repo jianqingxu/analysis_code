@@ -315,7 +315,6 @@ def get_all_results(All_Targets):
 
     models_results = {}
 
-
     # loop over l1.pdb, l2.pdb, l3.pdb, l4.pdb ...
     for model in sorted(_models_to_check_):
 
@@ -331,7 +330,6 @@ def get_all_results(All_Targets):
 
 	models_results[model] = copy.deepcopy(results)
 
-
     for model in sorted(models_results):
 	print model
 	print models_results[model]
@@ -343,12 +341,10 @@ def get_all_results(All_Targets):
 
 def histogram(data, min_bound, max_bound, bin_size):
     num_bins = int(  (float(max_bound) - float(min_bound)) /float( bin_size) ) + 1
-    print "num_bins=", num_bins
     hist = [0.0 for x in range(num_bins)]
 
     for num in data:
 	bin_location=int(  (float(num) - float(min_bound))/float(bin_size)  ) 
-	print "bin_location=", bin_location
 	hist[ bin_location ] += 1.0
 
     for i in range(0, num_bins):
@@ -356,28 +352,51 @@ def histogram(data, min_bound, max_bound, bin_size):
 
     return hist
 
-
+_distribution_creteria_={
+	    "C_N_bond"     : {
+			    "min_bound": 0.0,
+			    "max_bound": 8.0,
+			    "bin_size":  0.1
+		},
+            "CA_C_N_angle" : {
+			    "min_bound":90.0, 
+			    "max_bound":140.0, 
+			    "bin_size": 0.1
+		
+		},
+            "C_N_CA_angle" : {
+			    "min_bound":90.0, 
+			    "max_bound":140.0, 
+			    "bin_size":0.1
+		},
+            "d_rmsd"       : {
+			    "min_bound":0.0, 
+			    "max_bound":8.0, 
+			    "bin_size":0.1
+		},
+            "d_score"      : {
+			    "min_bound":-10.0, 
+			    "max_bound":100.0, 
+			    "bin_size":0.1
+		}
+	}
 
 def calculate_distribution(models_results):
     models_distribution = {}
 
     # loop over 1.pdb, 2.pdb, 3.pdb ...
     for model in sorted(models_results):
+	print model
 	distribution = {}
 	for result in sorted(models_results[model]):
-	    if result == "C_N_bond": 
-		min_bound=0.0; max_bound=10.0; bin_size=0.1
-	    if result == "CA_C_N_angle":
-		min_bound=0.0; max_bound=360.0; bin_size=0.1
-	    if result == "C_N_CA_angle":
-		min_bound=0.0; max_bound=360.0; bin_size=0.1
-	    if result == "d_rmsd":
-		min_bound=0.0; max_bound=10.0; bin_size=0.1
-	    if result == "d_score":
-		min_bound=-10000.0; max_bound=10000.0; bin_size=0.1
-
-	    print "Distribution of .... ", result 
-	    distribution [result] = copy.deepcopy(histogram(models_results[model][result], min_bound, max_bound, bin_size) )
+	    print result 
+	    min_bound = copy.deepcopy(  _distribution_creteria_[result]["min_bound"] )
+	    max_bound = copy.deepcopy(  _distribution_creteria_[result]["max_bound"] )
+	    bin_size  = copy.deepcopy(  _distribution_creteria_[result]["bin_size"]  )
+	    distribution[result] = copy.deepcopy( histogram(models_results[model][result], min_bound, max_bound, bin_size) )
+	    #print models_results[model][result]
+	    #print 
+	    #print
 
 	models_distribution[model] = copy.deepcopy(distribution)
 
@@ -395,12 +414,15 @@ def output_final_distribution_results(models_distribution, native_pose):
 	for result in sorted(models_distribution[model]):
 	    fname = analysis_path+model+"_"+result+"_distribution"
 	    f = open(fname,'w')
-	    f.write(models_distribution[model][result] )
+	    for i in range(0, len (models_distribution[model][result])) :
+		str1=str( float(i+1)*_distribution_creteria_[result]["bin_size"] )
+		str2=str(   str(models_distribution[model][result])  )
+		f.write('%s  %s\n' % (str1, str2) )
 	    f.close()
 
-
-
-
+	    
+	    
+	    
 def main(args):
 
     parser = optparse.OptionParser(usage="usage: %prog [OPTIONS] [TESTS]")
